@@ -3,7 +3,6 @@ import axios from 'axios';
 import './ProductList.css';
 
 const ProductList = () => {
-  // Hooks 必须在组件的顶层定义
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [category, setCategory] = useState('');
@@ -11,7 +10,7 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
 
-  // 获取产品数据
+  // Fetch products
   useEffect(() => {
     axios.get('http://localhost:5000/api/products')
       .then(response => {
@@ -23,7 +22,7 @@ const ProductList = () => {
       });
   }, []);
 
-  // 过滤函数
+  // Filter products
   const handleFilter = () => {
     const filtered = products.filter(product =>
       (category === '' || product.category === category) &&
@@ -32,7 +31,7 @@ const ProductList = () => {
     setFilteredProducts(filtered);
   };
 
-  // 搜索函数
+  // Search products
   const handleSearch = () => {
     const searched = products.filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,7 +40,7 @@ const ProductList = () => {
     setFilteredProducts(searched);
   };
 
-  // 添加到购物车
+  // Add to cart
   const addToCart = (product) => {
     setCart(prevCart => {
       const existingProduct = prevCart.find(item => item._id === product._id);
@@ -54,16 +53,32 @@ const ProductList = () => {
     });
   };
 
-  // 从购物车移除
+  // Remove from cart
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item._id !== productId));
+    setCart(prevCart => {
+      return prevCart.map(item => {
+        if (item._id === productId) {
+          if (item.quantity > 1) {
+            return { ...item, quantity: item.quantity - 1 }; // Decrease quantity by 1
+          } else {
+            return null; // Remove item if quantity is 1
+          }
+        }
+        return item;
+      }).filter(Boolean); // Remove null values (items marked for removal)
+    });
+  };
+
+  // Calculate subtotal
+  const getSubtotal = () => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
   };
 
   return (
     <div className="product-list">
       <h1>Online Computer Store</h1>
 
-      {/* 筛选和搜索区 */}
+      {/* Filters */}
       <div className="filters">
         <select onChange={(e) => setCategory(e.target.value)}>
           <option value="">All Categories</option>
@@ -90,22 +105,22 @@ const ProductList = () => {
         <button onClick={handleSearch}>Search</button>
       </div>
 
-      {/* 产品网格展示 */}
+      {/* Products */}
       <div className="grid-container">
         {filteredProducts.map(product => (
           <div className="product-card" key={product._id}>
             <img src={product.imageUrl} alt={product.name} className="product-image" />
-            <h2 className="product-name">{product.name}</h2>
-            <p className="product-manufacturer">Manufacturer: {product.manufacturer}</p>
-            <p className="product-category">Category: {product.category}</p>
-            <p className="product-price">Price: ${product.price}</p>
-            <p className="product-stock">In Stock: {product.stock}</p>
+            <h2>{product.name}</h2>
+            <p>Manufacturer: {product.manufacturer}</p>
+            <p>Category: {product.category}</p>
+            <p>Price: ${product.price}</p>
+            <p>Stock: {product.stock}</p>
             <button onClick={() => addToCart(product)}>Add to Cart</button>
           </div>
         ))}
       </div>
 
-      {/* 购物车展示 */}
+      {/* Shopping Cart */}
       <div className="cart">
         <h2>Shopping Cart</h2>
         {cart.length === 0 ? (
@@ -116,10 +131,16 @@ const ProductList = () => {
               <h3>{item.name}</h3>
               <p>Price: ${item.price}</p>
               <p>Quantity: {item.quantity}</p>
-              <button onClick={() => removeFromCart(item._id)}>Remove</button>
+              <button
+                onClick={() => removeFromCart(item._id)}
+                style={{ backgroundColor: 'red', color: 'white' }}
+              >
+                Remove
+              </button>
             </div>
           ))
         )}
+        <p>Subtotal: ${getSubtotal()}</p>
       </div>
     </div>
   );
