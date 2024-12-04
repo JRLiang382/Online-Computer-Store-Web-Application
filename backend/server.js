@@ -19,4 +19,8 @@ mongoose.connect('mongodb://localhost:27017/online-store', {
 // 路由
 app.use('/api/products', productRoutes);
 
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
+
 app.listen(5000, () => console.log('Server running on port 5000'));
