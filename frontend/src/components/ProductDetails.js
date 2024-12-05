@@ -4,65 +4,151 @@ import axios from 'axios';
 import './ProductDetails.css';
 
 const ProductDetails = () => {
-  const { productId } = useParams(); // 获取 URL 中的商品 ID
-  const [product, setProduct] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const fetchProductDetails = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
-        if (response.data.success) {
+    const { productId } = useParams(); // 从 URL 获取 productId
+    const [product, setProduct] = useState(null);
+    const [ratings, setRatings] = useState([]); // 存储评分和评论
+    const [newRating, setNewRating] = useState(5); // 新评分，默认 5 星
+    const [newComment, setNewComment] = useState(''); // 新评论
+    const [username, setUsername] = useState(''); // 当前登录用户名
+    const [error, setError] = useState('');
+  
+    // 获取产品详情
+    useEffect(() => {
+      const fetchProductDetails = async () => {
+        try {
+          const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
           setProduct(response.data.product);
+        } catch (error) {
+          console.error('Error fetching product details:', error);
+          setError('Failed to fetch product details.');
+        }
+      };
+  
+      fetchProductDetails();
+    }, [productId]);
+  
+    // 获取评论和评分
+    useEffect(() => {
+      const fetchRatings = async () => {
+        try {
+          const response = await axios.get('https://6751349c69dc1669ec1d6417.mockapi.io/ratings');
+          const productRatings = response.data.filter((rating) => rating.productId === productId);
+          setRatings(productRatings);
+        } catch (error) {
+          console.error('Error fetching ratings:', error);
+          setError('Failed to fetch ratings.');
+        }
+      };
+  
+      fetchRatings();
+    }, [productId]);
+  
+    // 获取当前登录用户
+    useEffect(() => {
+      const fetchUsername = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Unauthorized. Please login.');
+          return;
+        }
+  
+        try {
+          const response = await axios.get('http://localhost:5000/api/auth/user', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUsername(response.data.username);
+        } catch (error) {
+          console.error('Error fetching username:', error);
+          setError('Failed to fetch user information.');
+        }
+      };
+  
+      fetchUsername();
+    }, []);
+  
+    // 提交新的评分和评论
+    const handleSubmitReview = async (e) => {
+      e.preventDefault();
+      if (!newComment.trim()) {
+        setError('Comment cannot be empty.');
+        return;
+      }
+  
+      const newReview = {
+        username,
+        rating: newRating,
+        comment: newComment,
+        timestamp: new Date().toISOString(),
+        productId: productId,
+      };
+  
+      try {
+        const response = await axios.post('https://6751349c69dc1669ec1d6417.mockapi.io/ratings', newReview);
+        if (response.status === 201) {
+          setRatings((prevRatings) => [...prevRatings, newReview]); // 更新本地状态
+          setNewComment(''); // 清空输入框
+          setNewRating(5); // 重置评分
         } else {
-          setError(response.data.message);
+          setError('Failed to submit review. Please try again.');
         }
       } catch (error) {
-        console.error('Error fetching product details:', error);
-        setError('Failed to fetch product details.');
+        console.error('Error submitting review:', error);
+        setError('An error occurred while submitting your review.');
       }
     };
-
-    fetchProductDetails();
-  }, [productId]);
-
-  if (error) return <p>{error}</p>;
-  if (!product) return <p>Loading...</p>;
-
-  return (
-    <div className="product-details">
-      <h1>{product.name}</h1>
-      <img src={product.imageUrl} alt={product.name} />
-      <p><strong>Manufacturer:</strong> {product.manufacturer}</p>
-      <p><strong>Category:</strong> {product.category}</p>
-      <p><strong>Price:</strong> ${product.price}</p>
-      <p><strong>Stock:</strong> {product.stock}</p>
-      <p><strong>Description:</strong> {product.description}</p>
-
-      {/* 显示附加图片 */}
-      <div className="additional-images">
-        {product.additionalImages.map((image, index) => (
-          <img key={index} src={image} alt={`Additional ${index + 1}`} />
-        ))}
-      </div>
-
-      {/* 显示评论 */}
-      <div className="reviews">
-        <h3>Reviews</h3>
-        {product.reviews.length === 0 ? (
-          <p>No reviews yet</p>
+  
+    if (error) return <p>{error}</p>;
+    if (!product) return <p>Loading...</p>;
+  
+    return (
+      <div className="product-details">
+        <h1>{product.name}</h1>
+        <img src={product.imageUrl} alt={product.name} />
+        <p>{product.description}</p>
+  
+        <h3>Ratings and Reviews</h3>
+        {ratings.length === 0 ? (
+          <p>No ratings yet.</p>
         ) : (
-          product.reviews.map((review, index) => (
-            <div key={index} className="review">
-              <p><strong>{review.username}</strong> ({new Date(review.timestamp).toLocaleDateString()}):</p>
-              <p>Rating: {review.rating} / 5</p>
-              <p>{review.comment}</p>
+          ratings.map((rating) => (
+            <div key={rating.id} className="review">
+              <p><strong>{rating.username}</strong>: {rating.comment}</p>
+              <p>Rating: {rating.rating} / 5</p>
+              <p>Date: {new Date(rating.timestamp).toLocaleString()}</p>
             </div>
           ))
         )}
+  
+        {/* 提交评分和评论 */}
+        <form onSubmit={handleSubmitReview} className="review-form">
+          <h3>Submit Your Review</h3>
+          <label>
+            Rating:
+            <select value={newRating} onChange={(e) => setNewRating(Number(e.target.value))}>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+              <option value={5}>5</option>
+            </select>
+          </label>
+          <br />
+          <label>
+            Comment:
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              rows="4"
+              cols="50"
+              placeholder="Write your review here..."
+            />
+          </label>
+          <br />
+          <button type="submit">Submit Review</button>
+        </form>
       </div>
-    </div>
-  );
-};
-
-export default ProductDetails;
+    );
+  };
+  
+  export default ProductDetails;
+  
