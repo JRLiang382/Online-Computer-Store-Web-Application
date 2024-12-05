@@ -1,0 +1,35 @@
+.checkout-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .checkout-form,
+  .order-summary {
+    background: #f9f9f9;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .cart-summary {
+    margin-top: 20px;
+  }
+  
+  .cart-item {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .pay-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  

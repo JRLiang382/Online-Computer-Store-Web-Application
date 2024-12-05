@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 const csrf = require('csurf'); 
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser()); 
+
 
 const csrfProtection = csrf({ cookie: true });
 
@@ -49,3 +51,6 @@ const PORT = 5000;
 app.listen(PORT, () =>
   console.log(`Server running on http://localhost:${PORT}`)
 );
+
+// 注册支付路由
+app.use('/api/payment', paymentRoutes);
