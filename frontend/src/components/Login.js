@@ -11,10 +11,15 @@ const Login = ({ setLoggedIn }) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5000/api/auth/login', { username, password });
+
       if (response.data.success) {
+        // 存储 JWT 到本地存储
+        localStorage.setItem('token', response.data.token);
+
+        // 设置登录状态
         setLoggedIn(true);
       } else {
-        setError('Invalid username or password');
+        setError(response.data.message);
       }
     } catch (error) {
       setError('An error occurred while logging in');

@@ -10,17 +10,30 @@ const ProductList = () => {
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
+  const [error, setError] = useState('');
 
   // 获取产品数据
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
-      .then(response => {
+    const fetchProducts = async () => {
+      const token = localStorage.getItem('token'); // 从 localStorage 获取 JWT
+      if (!token) {
+        setError('Unauthorized. Please login.');
+        return;
+      }
+
+      try {
+        const response = await axios.get('http://localhost:5000/api/products', {
+          headers: { Authorization: `Bearer ${token}` } // 设置 Authorization Header
+        });
         setProducts(response.data);
         setFilteredProducts(response.data);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error fetching products:', error);
-      });
+        setError('Error fetching products. Please login again.');
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   // 过滤函数
@@ -59,9 +72,18 @@ const ProductList = () => {
     setCart(prevCart => prevCart.filter(item => item._id !== productId));
   };
 
+  // 处理注销逻辑
+  const handleLogout = () => {
+    localStorage.removeItem('token'); // 清除 JWT
+    window.location.reload(); // 刷新页面返回登录界面
+  };
+
+  if (error) return <p>{error}</p>;
+
   return (
     <div className="product-list">
       <h1>Online Computer Store</h1>
+      <button onClick={handleLogout} style={{ marginBottom: '20px' }}>Logout</button>
 
       {/* 筛选和搜索区 */}
       <div className="filters">
