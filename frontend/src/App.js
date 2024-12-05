@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import Login from './components/Login';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProductList from './components/ProductList';
+import ProductDetails from './components/ProductDetails';
 
-const App = () => {
-  const [loggedIn, setLoggedIn] = useState(false);
-
+function App() {
   return (
-    <div>
-      {loggedIn ? <ProductList /> : <Login setLoggedIn={setLoggedIn} />}
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<ProductList />} />
+        <Route path="/products/:productId" element={<ProductDetails />} />
+      </Routes>
+    </Router>
   );
-};
+}
 
 export default App;

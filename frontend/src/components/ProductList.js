@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './ProductList.css';
 
@@ -83,9 +84,10 @@ const ProductList = () => {
         setError('Failed to fetch order history.');
       }
     };
-
+  
     fetchOrders();
-  }, [orderSummary]); // 订单更新时重新加载历史记录
+  }, [orderSummary]); // 当 orderSummary 更新时，重新加载订单历史
+  
 
   // 过滤产品
   const handleFilter = () => {
@@ -131,14 +133,20 @@ const ProductList = () => {
       return;
     }
   
+    // 检查库存是否足够
+    const insufficientStock = cart.find((item) => {
+      const product = products.find((p) => p._id === item._id);
+      return product && item.quantity > product.stock;
+    });
+  
+    if (insufficientStock) {
+      const product = products.find((p) => p._id === insufficientStock._id);
+      alert(`Insufficient stock for "${product.name}". Only ${product.stock} left in stock.`);
+      return; // 阻止下单
+    }
+  
     try {
       const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      // console.log('Checkout request data:', {
-      //   cartItems: cart,
-      //   totalPrice,
-      //   paymentMethod,
-      //   username,
-      // });
   
       const response = await axios.post(
         'http://localhost:5000/api/payment/checkout',
@@ -147,8 +155,20 @@ const ProductList = () => {
       );
   
       if (response.data.success) {
-        setOrderSummary(response.data.orderSummary);
+        setOrderSummary(response.data.orderSummary); // 更新订单摘要
         setCart([]); // 清空购物车
+  
+        // 更新产品数据以反映库存变化
+        const updatedProducts = products.map((product) => {
+          const cartItem = cart.find((item) => item._id === product._id);
+          if (cartItem) {
+            return { ...product, stock: product.stock - cartItem.quantity };
+          }
+          return product;
+        });
+  
+        setProducts(updatedProducts);
+        setFilteredProducts(updatedProducts);
       } else {
         setError(response.data.message);
       }
@@ -157,6 +177,9 @@ const ProductList = () => {
       setError('An error occurred during checkout. Please try again.');
     }
   };
+  
+
+  
   
   
 
@@ -208,6 +231,9 @@ const ProductList = () => {
             <p className="product-category">Category: {product.category}</p>
             <p className="product-price">Price: ${product.price}</p>
             <p className="product-stock">In Stock: {product.stock}</p>
+            <Link to={`/products/${product._id}`}>
+              <button>View Details</button>
+            </Link>
             <button onClick={() => addToCart(product)}>Add to Cart</button>
           </div>
         ))}

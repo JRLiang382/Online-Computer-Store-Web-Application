@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../models/Order'); // 引入 Order 模型
+const Order = require('../models/Order'); // 订单模型
+const Product = require('../models/Product'); // 产品模型
 
 // 模拟的支付处理（POST /api/payment/checkout）
 router.post('/checkout', async (req, res) => {
@@ -23,7 +24,22 @@ router.post('/checkout', async (req, res) => {
   }
 
   try {
-    // 创建订单记录
+    // 检查库存是否足够
+    for (const item of cartItems) {
+      const product = await Product.findById(item._id); // 查找产品
+      if (!product) {
+        return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Not enough stock for ${product.name}. Only ${product.stock} left.`,
+        });
+      }
+    }
+
+    // 如果所有商品库存都足够，创建订单记录
     const orderId = `ORDER-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     const newOrder = new Order({
       orderId,
@@ -31,10 +47,17 @@ router.post('/checkout', async (req, res) => {
       totalPrice,
       paymentMethod,
       status: 'Payment Successful',
-      username, // 保存下单用户名称
+      username,
     });
 
     await newOrder.save();
+
+    // 减少库存
+    for (const item of cartItems) {
+      const product = await Product.findById(item._id);
+      product.stock -= item.quantity; // 减少库存
+      await product.save(); // 保存更新
+    }
 
     // 返回订单摘要
     const orderSummary = {
@@ -49,8 +72,8 @@ router.post('/checkout', async (req, res) => {
 
     res.status(200).json({ success: true, orderSummary });
   } catch (error) {
-    console.error('Error saving order:', error);
-    res.status(500).json({ success: false, message: 'Failed to save order.' });
+    console.error('Error processing checkout:', error);
+    res.status(500).json({ success: false, message: 'Failed to process checkout.' });
   }
 });
 

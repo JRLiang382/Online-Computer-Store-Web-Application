@@ -1,0 +1,82 @@
+/* ProductDetails.css */
+
+/* 容器的整体样式 */
+.product-details {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 800px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  }
+  
+  /* 产品名称样式 */
+  .product-details h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  /* 产品主图样式 */
+  .product-details img {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+  }
+  
+  /* 产品信息样式 */
+  .product-details p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #555;
+  }
+  
+  /* 附加图片容器 */
+  .additional-images {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+  }
+  
+  /* 附加图片样式 */
+  .additional-images img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+  
+  /* 评论区样式 */
+  .reviews {
+    margin-top: 30px;
+  }
+  
+  .reviews h3 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  /* 单条评论样式 */
+  .review {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+  
+  .review p {
+    margin: 5px 0;
+  }
+  
+  .review strong {
+    color: #444;
+  }
+  
