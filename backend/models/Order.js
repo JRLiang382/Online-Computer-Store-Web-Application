@@ -7,6 +7,7 @@ const OrderSchema = new mongoose.Schema({
   paymentMethod: { type: String, required: true },
   status: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
+  username: { type: String, required: true }, // 新增字段，记录下单用户名称
 });
 
 module.exports = mongoose.model('Order', OrderSchema);

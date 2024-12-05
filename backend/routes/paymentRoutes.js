@@ -4,7 +4,7 @@ const Order = require('../models/Order'); // 引入 Order 模型
 
 // 模拟的支付处理（POST /api/payment/checkout）
 router.post('/checkout', async (req, res) => {
-  const { cartItems, totalPrice, paymentMethod } = req.body;
+  const { cartItems, totalPrice, paymentMethod, username } = req.body;
 
   if (!cartItems || cartItems.length === 0) {
     return res.status(400).json({ success: false, message: 'Cart is empty.' });
@@ -18,6 +18,10 @@ router.post('/checkout', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Payment method is required.' });
   }
 
+  if (!username) {
+    return res.status(400).json({ success: false, message: 'Username is required.' });
+  }
+
   try {
     // 创建订单记录
     const orderId = `ORDER-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -27,6 +31,7 @@ router.post('/checkout', async (req, res) => {
       totalPrice,
       paymentMethod,
       status: 'Payment Successful',
+      username, // 保存下单用户名称
     });
 
     await newOrder.save();
@@ -39,6 +44,7 @@ router.post('/checkout', async (req, res) => {
       paymentMethod,
       status: 'Payment Successful',
       timestamp: new Date().toISOString(),
+      username,
     };
 
     res.status(200).json({ success: true, orderSummary });

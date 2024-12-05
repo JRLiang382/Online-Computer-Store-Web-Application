@@ -65,4 +65,28 @@ router.get('/protected', (req, res) => {
   }
 });
 
+// 获取当前用户信息
+router.get('/user', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1]; // 从请求头中提取 token
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  try {
+    // 验证 token 并解析用户信息
+    const decoded = jwt.verify(token, SECRET_KEY);
+    const user = await User.findById(decoded.id).select('username');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({ success: true, username: user.username });
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    res.status(401).json({ success: false, message: 'Invalid or expired token' });
+  }
+});
+
 module.exports = router;

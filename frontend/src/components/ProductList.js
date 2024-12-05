@@ -23,20 +23,24 @@ const ProductList = () => {
         setError('Unauthorized. Please login.');
         return;
       }
-
+  
       try {
         const response = await axios.get('http://localhost:5000/api/auth/user', {
           headers: { Authorization: `Bearer ${token}` },
         });
+  
+        // console.log('Fetched username:', response.data.username); // 检查用户名
         setUsername(response.data.username);
       } catch (error) {
         console.error('Error fetching username:', error);
         setError('Failed to fetch user information. Please login again.');
       }
     };
-
+  
     fetchUsername();
   }, []);
+  
+  
 
   // 获取产品数据
   useEffect(() => {
@@ -126,16 +130,22 @@ const ProductList = () => {
       setError('Your cart is empty.');
       return;
     }
-
+  
     try {
       const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
+      // console.log('Checkout request data:', {
+      //   cartItems: cart,
+      //   totalPrice,
+      //   paymentMethod,
+      //   username,
+      // });
+  
       const response = await axios.post(
         'http://localhost:5000/api/payment/checkout',
         { cartItems: cart, totalPrice, paymentMethod, username },
         { withCredentials: true }
       );
-
+  
       if (response.data.success) {
         setOrderSummary(response.data.orderSummary);
         setCart([]); // 清空购物车
@@ -147,6 +157,8 @@ const ProductList = () => {
       setError('An error occurred during checkout. Please try again.');
     }
   };
+  
+  
 
   // 注销逻辑
   const handleLogout = () => {
