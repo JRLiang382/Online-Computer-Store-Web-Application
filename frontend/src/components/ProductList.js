@@ -3,7 +3,6 @@ import axios from 'axios';
 import './ProductList.css';
 
 const ProductList = () => {
-  // Hooks 必须在组件的顶层定义
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [category, setCategory] = useState('');
@@ -11,13 +10,38 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
   const [error, setError] = useState('');
-  const [orderSummary, setOrderSummary] = useState(null); // 用于存储订单摘要
+  const [orderSummary, setOrderSummary] = useState(null); // 当前订单摘要
   const [paymentMethod, setPaymentMethod] = useState('Credit Card'); // 默认支付方式
+  const [orders, setOrders] = useState([]); // 所有订单记录
+  const [username, setUsername] = useState(''); // 当前登录用户
+
+  // 获取当前登录用户的用户名
+  useEffect(() => {
+    const fetchUsername = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Unauthorized. Please login.');
+        return;
+      }
+
+      try {
+        const response = await axios.get('http://localhost:5000/api/auth/user', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUsername(response.data.username);
+      } catch (error) {
+        console.error('Error fetching username:', error);
+        setError('Failed to fetch user information. Please login again.');
+      }
+    };
+
+    fetchUsername();
+  }, []);
 
   // 获取产品数据
   useEffect(() => {
     const fetchProducts = async () => {
-      const token = localStorage.getItem('token'); // 从 localStorage 获取 JWT
+      const token = localStorage.getItem('token');
       if (!token) {
         setError('Unauthorized. Please login.');
         return;
@@ -25,7 +49,7 @@ const ProductList = () => {
 
       try {
         const response = await axios.get('http://localhost:5000/api/products', {
-          headers: { Authorization: `Bearer ${token}` }, // 设置 Authorization Header
+          headers: { Authorization: `Bearer ${token}` },
         });
         setProducts(response.data);
         setFilteredProducts(response.data);
@@ -38,7 +62,28 @@ const ProductList = () => {
     fetchProducts();
   }, []);
 
-  // 过滤函数
+  // 获取所有订单记录
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/payment/orders', {
+          withCredentials: true,
+        });
+        if (response.data.success) {
+          setOrders(response.data.orders);
+        } else {
+          setError(response.data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setError('Failed to fetch order history.');
+      }
+    };
+
+    fetchOrders();
+  }, [orderSummary]); // 订单更新时重新加载历史记录
+
+  // 过滤产品
   const handleFilter = () => {
     const filtered = products.filter((product) =>
       (category === '' || product.category === category) &&
@@ -48,7 +93,7 @@ const ProductList = () => {
     setFilteredProducts(filtered);
   };
 
-  // 搜索函数
+  // 搜索产品
   const handleSearch = () => {
     const searched = products.filter((product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,7 +120,7 @@ const ProductList = () => {
     setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
   };
 
-  // 模拟支付处理
+  // 模拟支付并生成订单
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setError('Your cart is empty.');
@@ -87,7 +132,7 @@ const ProductList = () => {
 
       const response = await axios.post(
         'http://localhost:5000/api/payment/checkout',
-        { cartItems: cart, totalPrice, paymentMethod },
+        { cartItems: cart, totalPrice, paymentMethod, username },
         { withCredentials: true }
       );
 
@@ -103,13 +148,11 @@ const ProductList = () => {
     }
   };
 
-  // 处理注销逻辑
+  // 注销逻辑
   const handleLogout = () => {
-    localStorage.removeItem('token'); // 清除 JWT
-    window.location.reload(); // 刷新页面返回登录界面
+    localStorage.removeItem('token');
+    window.location.reload();
   };
-
-  if (error) return <p>{error}</p>;
 
   return (
     <div className="product-list">
@@ -199,11 +242,35 @@ const ProductList = () => {
           <h2>Order Summary</h2>
           <p><strong>Order ID:</strong> {orderSummary.orderId}</p>
           <p><strong>Total Price:</strong> ${orderSummary.totalPrice}</p>
+          <p><strong>Tax (13%):</strong> ${(orderSummary.totalPrice * 0.13).toFixed(2)}</p>
+          <p><strong>Total After Tax:</strong> ${(orderSummary.totalPrice * 1.13).toFixed(2)}</p>
           <p><strong>Payment Method:</strong> {orderSummary.paymentMethod}</p>
           <p><strong>Status:</strong> {orderSummary.status}</p>
           <p><strong>Date:</strong> {orderSummary.timestamp}</p>
+          <p><strong>Customer:</strong> {username}</p>
         </div>
       )}
+
+      {/* 历史订单展示 */}
+      <div className="order-history">
+        <h2>Order History</h2>
+        {orders.length === 0 ? (
+          <p>No order history available.</p>
+        ) : (
+          orders.map((order) => (
+            <div key={order.orderId} className="order-item">
+              <p><strong>Order ID:</strong> {order.orderId}</p>
+              <p><strong>Customer:</strong> {order.username}</p>
+              <p><strong>Total Price:</strong> ${order.totalPrice}</p>
+              <p><strong>Tax (13%):</strong> ${(order.totalPrice * 0.13).toFixed(2)}</p>
+              <p><strong>Total After Tax:</strong> ${(order.totalPrice * 1.13).toFixed(2)}</p>
+              <p><strong>Date:</strong> {new Date(order.timestamp).toLocaleString()}</p>
+              <p><strong>Status:</strong> {order.status}</p>
+              <hr />
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
