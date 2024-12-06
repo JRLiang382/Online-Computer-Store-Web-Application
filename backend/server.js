@@ -37,12 +37,10 @@ app.get('/api/auth/csrf-token', csrfProtection, (req, res) => {
 
 // 数据库连接
 mongoose
-  .connect('mongodb://localhost:27017/online-store', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect('mongodb://localhost:27017/online-store')
   .then(() => console.log('MongoDB connected successfully!'))
   .catch((err) => console.error('MongoDB connection error:', err));
+
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', csrfProtection, authRoutes);

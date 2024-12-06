@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Import Link
 import axios from 'axios';
-import './Login.css';
+import { Link } from 'react-router-dom'; // Import Link
+import './Login.css'; // Reuse the same CSS for styling
 
-const Login = ({ setLoggedIn }) => {
+const Register = ({ setLoggedIn }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [csrfToken, setCsrfToken] = useState(''); // 用于存储 CSRF token
+  const [success, setSuccess] = useState('');
+  const [csrfToken, setCsrfToken] = useState(''); // CSRF token
 
-  // 获取 CSRF token
+  // Fetch CSRF token
   const fetchCsrfToken = async () => {
     try {
-      // 请求后端获取 CSRF token
       const response = await axios.get('http://localhost:5000/api/auth/csrf-token', {
-        withCredentials: true, // 确保 cookie 被包含在请求中
+        withCredentials: true,
       });
-      // 从 cookie 中提取 CSRF token
       const tokenFromCookie = document.cookie
         .split('; ')
         .find((row) => row.startsWith('XSRF-TOKEN='))
@@ -29,13 +28,12 @@ const Login = ({ setLoggedIn }) => {
     }
   };
 
-  // 初始化时获取 CSRF token
   useEffect(() => {
     fetchCsrfToken();
   }, []);
 
-  // 处理登录
-  const handleLogin = async (e) => {
+  // Handle registration
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     if (!csrfToken) {
@@ -45,36 +43,35 @@ const Login = ({ setLoggedIn }) => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/auth/login',
+        'http://localhost:5000/api/auth/register',
         { username, password },
         {
           headers: {
-            'X-XSRF-TOKEN': csrfToken, // 将 CSRF token 添加到请求头
+            'X-XSRF-TOKEN': csrfToken,
           },
-          withCredentials: true, // 确保 cookie 被包含在请求中
+          withCredentials: true,
         }
       );
 
       if (response.data.success) {
-        // 存储 JWT 到本地存储
-        localStorage.setItem('token', response.data.token);
-
-        // 设置登录状态
-        setLoggedIn(true);
+        setSuccess('Registration successful! You can now log in.');
+        setUsername('');
+        setPassword('');
       } else {
-        setError(response.data.message || 'Login failed. Please try again.');
+        setError(response.data.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setError('An error occurred while logging in. Please try again.');
+      console.error('Registration error:', error);
+      setError('An error occurred during registration. Please try again.');
     }
   };
 
   return (
     <div className="login-container">
-      <form className="login-form" onSubmit={handleLogin}>
-        <h2>Login</h2>
+      <form className="login-form" onSubmit={handleRegister}>
+        <h2>Register</h2>
         {error && <p className="error">{error}</p>}
+        {success && <p className="success">{success}</p>}
         <input
           type="text"
           placeholder="Username"
@@ -89,13 +86,13 @@ const Login = ({ setLoggedIn }) => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit">Register</button>
         <p>
-          Don't have an account? <Link to="/register">Register here</Link>
+          Already have an account? <Link to="/login">Login here</Link>
         </p>
       </form>
     </div>
   );
 };
 
-export default Login;
+export default Register;

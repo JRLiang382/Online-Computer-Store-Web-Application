@@ -7,13 +7,75 @@ const router = express.Router();
 
 const SECRET_KEY = 'admin'; // 建议用环境变量存储
 
+// 用户注册
+router.post(
+  '/register',
+  [
+    // 使用 express-validator 验证和清理用户输入
+    check('username')
+      .trim()
+      .escape()
+      .notEmpty()
+      .withMessage('Username is required')
+      .isLength({ min: 3 })
+      .withMessage('Username must be at least 3 characters long'),
+    check('password')
+      .trim()
+      .notEmpty()
+      .withMessage('Password is required')
+      .isLength({ min: 3 })
+      .withMessage('Password must be at least 6 characters long'),
+  ],
+  async (req, res) => {
+    // 检查验证结果
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { username, password } = req.body;
+
+    try {
+      // 检查用户名是否已存在
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'Username is already taken' });
+      }
+
+      // 加密密码
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // 创建新用户
+      const newUser = new User({
+        username,
+        password: hashedPassword,
+        role: 'regular', // 默认角色
+      });
+
+      await newUser.save();
+
+      // 生成 JWT
+      const token = jwt.sign(
+        { id: newUser._id, username: newUser.username, role: newUser.role },
+        SECRET_KEY,
+        { expiresIn: '24h' }
+      );
+
+      res.status(201).json({ success: true, message: 'User registered successfully', token });
+    } catch (error) {
+      console.error('Error registering user:', error);
+      res.status(500).json({ success: false, message: 'Server error', error });
+    }
+  }
+);
+
 // 用户登录
 router.post(
   '/login',
   [
     // 使用 express-validator 验证和清理用户输入
     check('username').trim().escape().notEmpty().withMessage('Username is required'),
-    check('password').trim().escape().notEmpty().withMessage('Password is required')
+    check('password').trim().escape().notEmpty().withMessage('Password is required'),
   ],
   async (req, res) => {
     // 检查验证结果
@@ -40,7 +102,7 @@ router.post(
       const token = jwt.sign(
         { id: user._id, username: user.username, role: user.role },
         SECRET_KEY,
-        { expiresIn: '1h' }
+        { expiresIn: '24h' }
       );
 
       res.json({ success: true, token, role: user.role });
