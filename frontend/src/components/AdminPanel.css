@@ -1,0 +1,83 @@
+.admin-panel {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .admin-panel h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .admin-panel form {
+    margin-bottom: 20px;
+  }
+  
+  .admin-panel form input,
+  .admin-panel form button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .admin-panel form button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .admin-panel form button:hover {
+    background-color: #0056b3;
+  }
+  
+  .admin-product-list {
+    margin-top: 20px;
+  }
+  
+  .admin-product-list table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .admin-product-list table th,
+  .admin-product-list table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  .admin-product-list table th {
+    background-color: #f1f1f1;
+    text-align: left;
+  }
+  
+  .admin-product-list .actions button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .admin-product-list .actions .edit {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .admin-product-list .actions .edit:hover {
+    background-color: #218838;
+  }
+  
+  .admin-product-list .actions .delete {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .admin-product-list .actions .delete:hover {
+    background-color: #c82333;
+  }
+  

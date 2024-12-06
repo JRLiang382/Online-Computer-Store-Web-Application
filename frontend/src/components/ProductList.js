@@ -1,6 +1,6 @@
-// ProductList.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './ProductList.css';
 
@@ -11,7 +11,6 @@ const ProductList = () => {
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState(() => {
-    // 从 localStorage 初始化购物车状态
     const savedCart = localStorage.getItem('cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
@@ -20,6 +19,8 @@ const ProductList = () => {
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [orders, setOrders] = useState([]);
   const [username, setUsername] = useState('');
+
+  const navigate = useNavigate();
 
   // 监听购物车变化，更新 localStorage
   useEffect(() => {
@@ -40,6 +41,7 @@ const ProductList = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsername(response.data.username);
+        localStorage.setItem('username', response.data.username);
       } catch (error) {
         console.error('Error fetching username:', error);
         setError('Failed to fetch user information. Please login again.');
@@ -48,6 +50,20 @@ const ProductList = () => {
   
     fetchUsername();
   }, []);
+
+  // 处理管理员面板导航
+  const handleAdminNavigation = (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const currentUsername = localStorage.getItem('username');
+    
+    if (!token || currentUsername !== 'admin') {
+      setError('Unauthorized access');
+      return;
+    }
+
+    navigate('/admin');
+  };
 
   // 获取产品数据并同步购物车
   useEffect(() => {
@@ -71,7 +87,6 @@ const ProductList = () => {
           return prevCart.map(cartItem => {
             const updatedProduct = fetchedProducts.find(p => p._id === cartItem._id);
             if (updatedProduct) {
-              // 更新产品信息，保留购物车中的数量
               return {
                 ...updatedProduct,
                 quantity: cartItem.quantity
@@ -79,7 +94,6 @@ const ProductList = () => {
             }
             return cartItem;
           }).filter(item => {
-            // 移除已不存在的产品
             const productExists = fetchedProducts.some(p => p._id === item._id);
             if (!productExists) {
               console.log(`Removing product ${item.name} from cart as it no longer exists`);
@@ -213,8 +227,8 @@ const ProductList = () => {
   
       if (response.data.success) {
         setOrderSummary(response.data.orderSummary);
-        setCart([]); // 清空购物车
-        localStorage.removeItem('cart'); // 清除本地存储的购物车数据
+        setCart([]);
+        localStorage.removeItem('cart');
   
         // 更新产品数据以反映库存变化
         const updatedProducts = products.map((product) => {
@@ -239,7 +253,8 @@ const ProductList = () => {
   // 处理注销
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('cart'); // 清除购物车数据
+    localStorage.removeItem('cart');
+    localStorage.removeItem('username');
     window.location.reload();
   };
 
@@ -255,15 +270,29 @@ const ProductList = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="filters">
-        <select 
-          value={category} 
-          onChange={(e) => setCategory(e.target.value)}
-          className="filter-select"
+      {username === 'admin' && (
+        <button
+          onClick={handleAdminNavigation}
+          style={{
+            marginBottom: '20px',
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+            padding: '10px 20px',
+            cursor: 'pointer',
+            borderRadius: '4px',
+          }}
         >
+          Go to Admin Panel
+        </button>
+      )}
+
+      <div className="filters">
+        <select onChange={(e) => setCategory(e.target.value)}>
           <option value="">All Categories</option>
           <option value="desktops">Desktops</option>
           <option value="laptops">Laptops</option>
+          <option value="monitors">Monitors</option>
           <option value="accessories">Accessories</option>
         </select>
 
