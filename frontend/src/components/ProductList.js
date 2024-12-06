@@ -52,7 +52,6 @@ const ProductList = () => {
   }, []);
 
   // 处理管理员面板导航
-  // ProductList.js
   const handleAdminNavigation = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
@@ -272,6 +271,9 @@ const ProductList = () => {
     window.location.reload();
   };
 
+  // 根据当前用户过滤订单
+  const userOrders = orders.filter(order => order.username === username);
+
   return (
     <div className="product-list">
       <h1>Online Computer Store</h1>
@@ -410,6 +412,13 @@ const ProductList = () => {
                   <p className="cart-total">
                     Total Price: ${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
                   </p>
+                  <p className="cart-total">
+                    Tax (13%): ${(cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 0.13).toFixed(2)}
+                  </p>
+                  <p className="cart-total">
+                    Total Price with tax: ${(cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.13).toFixed(2)}
+                  </p>
+
                   <div className="payment-method">
                     <label htmlFor="payment-method">Payment Method: </label>
                     <select
@@ -452,11 +461,11 @@ const ProductList = () => {
 
           <div className="order-history">
             <h2>Order History</h2>
-            {orders.length === 0 ? (
+            {userOrders.length === 0 ? (
               <p className="no-orders">No order history available.</p>
             ) : (
               <div className="order-list">
-                {orders.map((order) => (
+                {userOrders.map((order) => (
                   <div key={order.orderId} className="order-item">
                     <p><strong>Order ID:</strong> {order.orderId}</p>
                     <p><strong>Customer:</strong> {order.username}</p>
