@@ -29,42 +29,46 @@ const AdminPanel = () => {
   };
 
   // Add or Update Product
-  const handleAddOrUpdateProduct = async () => {
+  // 修改 handleAddOrUpdateProduct 函数
+const handleAddOrUpdateProduct = async () => {
     if (!name || !manufacturer || !category || !price || !stock || !description || !imageUrl) {
       alert('All fields are required.');
       return;
     }
-
+  
     const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username'); // Assume username is stored in localStorage
-
+    const username = localStorage.getItem('username');
+  
     try {
       if (editingProductId) {
-        // Update product
+        // 更新产品
         const response = await axios.put(
-          `http://localhost:5000/api/products/${editingProductId}`,
+          `http://localhost:5000/api/products/update/${editingProductId}`, // 修改 URL 路径
           {
             username,
             name,
             manufacturer,
             category,
-            price,
-            stock,
+            price: Number(price), // 确保价格是数字
+            stock: Number(stock), // 确保库存是数字
             description,
             imageUrl,
           },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { 
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true // 如果需要 cookies
+          }
         );
-
+  
         if (response.data.success) {
           alert('Product updated successfully.');
           fetchProducts();
           resetForm();
         } else {
-          alert(response.data.message);
+          alert(response.data.message || 'Failed to update product');
         }
       } else {
-        // Add product
+        // 添加产品
         const response = await axios.post(
           'http://localhost:5000/api/products/add',
           {
@@ -72,48 +76,56 @@ const AdminPanel = () => {
             name,
             manufacturer,
             category,
-            price,
-            stock,
+            price: Number(price),
+            stock: Number(stock),
             description,
             imageUrl,
           },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { 
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+          }
         );
-
+  
         if (response.data.success) {
           alert('Product added successfully.');
           fetchProducts();
           resetForm();
         } else {
-          alert(response.data.message);
+          alert(response.data.message || 'Failed to add product');
         }
       }
     } catch (error) {
       console.error('Error adding/updating product:', error);
-      alert('Failed to add or update product. Please try again.');
+      alert(error.response?.data?.message || 'Failed to add or update product. Please try again.');
     }
   };
 
   // Delete Product
-  const handleDeleteProduct = async (productId) => {
-    const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username'); // Assume username is stored in localStorage
-
+const handleDeleteProduct = async (productId) => {
     try {
+      const username = localStorage.getItem('username');
+      const token = localStorage.getItem('token');
+      
       const response = await axios.delete(
-        `http://localhost:5000/api/products/${productId}`,
-        { headers: { Authorization: `Bearer ${token}` }, data: { username } }
+        `http://localhost:5000/api/products/delete/${productId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          data: { username }
+        }
       );
-
+  
       if (response.data.success) {
-        alert('Product deleted successfully.');
-        fetchProducts();
+        alert('Product deleted successfully');
+        fetchProducts(); // 刷新产品列表
       } else {
-        alert(response.data.message);
+        alert(response.data.message || 'Failed to delete product');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product.');
+      alert(error.response?.data?.message || 'Failed to delete product');
     }
   };
 

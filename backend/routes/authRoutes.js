@@ -128,9 +128,10 @@ router.get('/protected', (req, res) => {
 });
 
 // 获取当前用户信息
+// 获取当前用户信息
 router.get('/user', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1]; // 从请求头中提取 token
-
+  
   if (!token) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
@@ -138,17 +139,24 @@ router.get('/user', async (req, res) => {
   try {
     // 验证 token 并解析用户信息
     const decoded = jwt.verify(token, SECRET_KEY);
-    const user = await User.findById(decoded.id).select('username');
+    const user = await User.findById(decoded.id).select('username isAdmin'); // 添加 isAdmin 字段
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.status(200).json({ success: true, username: user.username });
+    // 返回用户信息，包括管理员状态
+    res.status(200).json({
+      success: true,
+      username: user.username,
+      isAdmin: user.username === 'admin' // 这里判断是否为管理员
+    });
+
   } catch (error) {
     console.error('Error verifying token:', error);
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 });
+
 
 module.exports = router;

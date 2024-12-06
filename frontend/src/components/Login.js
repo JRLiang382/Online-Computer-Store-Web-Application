@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Import Link
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
 
-const Login = ({ setLoggedIn }) => {
+const Login = ({ setLoggedIn, setIsAdmin }) => {  // 添加 setIsAdmin 参数
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [csrfToken, setCsrfToken] = useState(''); // 用于存储 CSRF token
+  const [csrfToken, setCsrfToken] = useState('');
+  const navigate = useNavigate();
 
-  // 获取 CSRF token
   const fetchCsrfToken = async () => {
     try {
-      // 请求后端获取 CSRF token
       const response = await axios.get('http://localhost:5000/api/auth/csrf-token', {
-        withCredentials: true, // 确保 cookie 被包含在请求中
+        withCredentials: true,
       });
-      // 从 cookie 中提取 CSRF token
       const tokenFromCookie = document.cookie
         .split('; ')
         .find((row) => row.startsWith('XSRF-TOKEN='))
@@ -29,12 +27,10 @@ const Login = ({ setLoggedIn }) => {
     }
   };
 
-  // 初始化时获取 CSRF token
   useEffect(() => {
     fetchCsrfToken();
   }, []);
 
-  // 处理登录
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -49,24 +45,32 @@ const Login = ({ setLoggedIn }) => {
         { username, password },
         {
           headers: {
-            'X-XSRF-TOKEN': csrfToken, // 将 CSRF token 添加到请求头
+            'X-XSRF-TOKEN': csrfToken,
           },
-          withCredentials: true, // 确保 cookie 被包含在请求中
+          withCredentials: true,
         }
       );
 
       if (response.data.success) {
-        // 存储 JWT 到本地存储
+        // 存储令牌和用户名
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('username', response.data.username);
 
         // 设置登录状态
         setLoggedIn(true);
+
+        // 导航到主页并刷新页面
+        navigate('/', { replace: true });
+        window.location.reload(); // 添加这一行
       } else {
         setError(response.data.message || 'Login failed. Please try again.');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('An error occurred while logging in. Please try again.');
+      setError(
+        error.response?.data?.message || 
+        'An error occurred while logging in. Please try again.'
+      );
     }
   };
 

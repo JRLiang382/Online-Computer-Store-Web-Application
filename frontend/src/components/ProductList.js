@@ -52,17 +52,31 @@ const ProductList = () => {
   }, []);
 
   // 处理管理员面板导航
-  const handleAdminNavigation = (e) => {
+  // ProductList.js
+  const handleAdminNavigation = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
-    const currentUsername = localStorage.getItem('username');
-    
-    if (!token || currentUsername !== 'admin') {
+
+    if (!token) {
       setError('Unauthorized access');
       return;
     }
 
-    navigate('/admin');
+    try {
+      // 验证管理员身份
+      const response = await axios.get('http://localhost:5000/api/auth/user', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success && response.data.username === 'admin') {
+        navigate('/admin');
+      } else {
+        setError('Unauthorized access');
+      }
+    } catch (error) {
+      console.error('Admin verification error:', error);
+      setError('Failed to verify admin privileges');
+    }
   };
 
   // 获取产品数据并同步购物车
